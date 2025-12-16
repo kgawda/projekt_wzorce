@@ -1,6 +1,7 @@
 
 from abc import ABC, abstractmethod
 import copy
+import requests
 
 
 class Drawer(ABC):
@@ -29,7 +30,26 @@ class BuildingDesign:
         return new
 
 
+class SiteChecker:
+    session: requests.Session
+
+    def __init__(self) -> None:
+        self.session = requests.Session()
+        
+    def check_http(self, domain: str):
+        try:
+            response = requests.get(f"http://{domain}")
+            return response.status_code == 200
+        except requests.exceptions.RequestException:
+            return False
+
+
 if __name__ == "__main__":
     design = BuildingDesign(TrivialDrawer())
     copy1 = design.copy()
     copy2 = copy.deepcopy(design)
+    
+    checker = SiteChecker()
+    for domain in ["example.com",]:
+        if checker.check_http(domain):
+            print(f"Domain {domain} works")
