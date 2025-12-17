@@ -68,6 +68,9 @@ def play_sound_handler(event: Any, bus: MessageBus):
 #    - KLUCZOWE: Opublikuj nowe zdarzenie LevelUp na szynie (bus.handle(...)).
 def grant_xp_handler(event: EnemyKilled, bus: MessageBus):
     ...
+    bus.handle(LevelUp(new_level=2))
+    bus.queue.append(LevelUp(new_level=2))
+
 
 # ZADANIE 2: Zaimplementuj handler leczenia przy awansie.
 # Logika: Gdy gracz awansuje, ulecz go do pełna (player.health = player.max_health)
@@ -80,8 +83,8 @@ def heal_on_level_up_handler(event: LevelUp, bus: MessageBus):
 # Pamiętaj, że jeden event może uruchomić wiele handlerów (np. EnemyKilled -> XP oraz Dźwięk).
 
 HANDLERS = {
-    # EnemyKilled: [ ... ],
-    # LevelUp: [ ... ]
+    EnemyKilled: [grant_xp_handler, play_sound_handler],
+    LevelUp: [heal_on_level_up_handler, play_sound_handler]
 }
 
 # --- 6. SIMULATION ---
