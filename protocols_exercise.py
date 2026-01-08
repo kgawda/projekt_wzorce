@@ -1,12 +1,13 @@
 import sys
+from typing import Protocol
 
+# TODO: SupportsWrite
 
-
-
-
-def write_log(msg: str, target):
+def write_log(msg: str, target: SupportsWrite):
     target.write(msg)
 
-write_log("ok", sys.stdout)
-with open("temp.txt") as f:
-    write_log("ok", f)
+
+if __name__ == "__main__":
+    write_log("ok", sys.stdout)
+    with open("temp.txt", "w") as f:
+        write_log("ok", f)
