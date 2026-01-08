@@ -55,7 +55,10 @@ def add_product():
         # 3. Stwórz MessageBus z tym UoW
         # 4. Wyślij komendę do busa (bus.handle)
         
-        # TODO
+        msg = CreateProduct(sku=sku, qty=qty)
+        uow = SqlAlchemyUnitOfWork()
+        bus = MessageBus(handlers=HANDLERS, uow=uow)
+        bus.handle(msg)
         
         return render_template_string("Produkt dodany! <a href='/'>Wróć</a>")
         
@@ -72,7 +75,10 @@ def allocate():
         # 2. Wyślij ją przez MessageBus (analogicznie jak wyżej)
         # Obserwuj konsolę.
         
-        # TODO
+        msg = Allocate(sku=sku, amount=qty)
+        uow = SqlAlchemyUnitOfWork()
+        bus = MessageBus(handlers=HANDLERS, uow=uow)
+        bus.handle(msg)
 
         return render_template_string("Próba alokacji zakończona. Sprawdź stan. <a href='/'>Wróć</a>")
 

@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Any, Callable, Self
+from typing import Any, Callable, Self, TypedDict
 
 from repos import InMemoryRepo, Repository
-from model import Message, OutOfStock
+from model import Message, OutOfStock, Product
 
 
 class AbstractUnitOfWork(ABC):
@@ -85,22 +85,37 @@ def allocate_handler(cmd: Allocate, uow: AbstractUnitOfWork):
     2. Pobierz produkt z repozytorium (uow.products.get).
     3. Wywołaj metodę domeny (product.allocate).
     """
-    pass  # TODO
+    with uow:
+        product = uow.products.get(cmd.sku)
+        if product is None:
+            ...
+        product.allocate(cmd.amount)
 
 def create_product_handler(cmd: CreateProduct, uow: AbstractUnitOfWork):
     """
     1. Utwórz nowy obiekt Product.
     2. Dodaj go do repozytorium (uow.products.add).
     """
-    pass  # TODO
+    product = Product(sku=cmd.sku, quantity=cmd.qty)
+    with uow:
+        uow.products.add(product)
+
 
 
 def out_of_stock_handler(event, uow):
     print(f"ALARM: Brak towaru w magazynie dla SKU: {event.sku}!")
 
+def out_of_stock_email_notifier(event, uow, email_config):
+    print(f"Sending email to {email_config['address']}")
+
+# to byłoby czytane w innym miejscu - tu dla prostej demonstracji obsługi dodatkowego argumentu
+email_config = {
+    'address': 'admin@example.com'
+}
+
 
 HANDLERS = {
-    Allocate: [allocate_handler],
+    Allocate: [allocate_handler, lambda event, uow: out_of_stock_email_notifier(event, uow, email_config)],
     CreateProduct: [create_product_handler],
     OutOfStock: [out_of_stock_handler],
 }
