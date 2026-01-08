@@ -1,11 +1,15 @@
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from model import Product
 
 class Repository(ABC):
     seen: list[Product]
 
     @abstractmethod
-    def get(self, id:str) -> Product: ...
+    def get(self, sku:str) -> Product: ...
+
+    @abstractmethod
+    def list(self) -> Iterable[Product]: ...
 
     @abstractmethod
     def save(self, product: Product) -> None: ...
@@ -15,12 +19,19 @@ class InMemoryRepo(Repository):
         self._data = {}
         self.seen = []
 
-    def get(self, id:str) -> Product:
-        product = self._data[id]
+    def get(self, sku:str) -> Product:
+        product = self._data[sku]
         self.seen.append(product)  # można wyrzucić do Repository przy użyciu _get
         return product
+    
+    def list(self) -> Iterable[Product]:
+        result = []
+        for product in self._data.values():
+            self.seen.append(product)
+            result.append(product)
+        return result
 
     def save(self, product: Product) -> None: 
         self.seen.append(product)  # można wyrzucić do Repository przy użyciu _save
-        self._data[product.id] = product
+        self._data[product.sku] = product
     

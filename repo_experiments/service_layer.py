@@ -2,12 +2,14 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from typing import Any, Callable, Self
 
-from repos import Repository
+from repos import InMemoryRepo, Repository
 from model import Message
 
 
 class AbstractUnitOfWork(ABC):
     products: Repository
+
+    # __init__ creates .products repository. May need some session factory as an argument
 
     def __enter__(self) -> Self:
         return self
@@ -19,8 +21,10 @@ class AbstractUnitOfWork(ABC):
             self.rollback()
         return False
     
-    @abstractmethod
-    def consume_messages(self) -> Iterator[Message]: ...
+    def consume_messages(self) -> Iterator[Message]:
+        for s in self.products.seen:
+            while s.messages:
+                yield s.messages.pop()
 
     @abstractmethod
     def commit(self): ...
@@ -30,16 +34,8 @@ class AbstractUnitOfWork(ABC):
 
 
 class InMemoryUnitOfWork(AbstractUnitOfWork):
-    # TODO: lepiej żeby OuW tworzył repozytorium niż je dostawał.
-    # I tak jest zależny od technologii DB (commit, rollback)
-    # (ale za to będzie potrzebował dostać dane do utworzenia połączenia z DB)
-    def __init__(self, products: Repository) -> None:
-        self.products = products
-
-    def consume_messages(self) -> Iterator[Message]:
-        for s in self.products.seen:
-            while s.messages:
-                yield s.messages.pop()
+    def __init__(self) -> None:
+        self.products = InMemoryRepo()
 
     def commit(self):
         pass  # może warto coś zapisać jako informację dla testów

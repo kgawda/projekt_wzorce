@@ -6,20 +6,25 @@ class Message(ABC):
     pass
 
 @dataclass
-class ProductOverbooked(Message):
-    product_id: str
+class OutOfStock(Message):
+    sku: str
 
 
 @dataclass
 class Product:
-    id: str
-    name: str
-    quantity: int
-    orders: list[int] = field(default_factory=list)
-    messages: list[Message] = field(default_factory=list)  # TODO: może by tak set zamiast list?
+    sku: str            # Stock Keeping Unit (ID)
+    quantity: int       # Dostępna ilość
+    messages: list[Message] = field(default_factory=list)
 
-    def add_new_order(self, quantity: int) -> None:
-        ordered = sum(self.orders)
-        if self.quantity - ordered < quantity:
-            self.messages.append(ProductOverbooked(self.id))
-        self.orders.append(quantity)  # Pewnie dobrze by było przechowywać więcej informacji o zamowieniu niż quantity
+    def can_allocate(self, amount: int) -> bool:
+        return self.quantity >= amount
+
+    def allocate(self, amount: int) -> None:
+        if self.can_allocate(amount):
+            self.quantity -= amount
+        else:
+            # Domain Event: Próbowano zamówić, ale brak towaru
+            self.messages.append(OutOfStock(self.sku))
+
+    def restock(self, amount: int) -> None:
+        self.quantity += amount
