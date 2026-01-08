@@ -1,6 +1,6 @@
 from flask import Flask, request, render_template_string
 from adapters import start_mappers, create_tables, SqlAlchemyUnitOfWork
-from service_layer import MessageBus, HANDLERS, Allocate, CreateProduct, OutOfStock, out_of_stock_handler
+from service_layer import MessageBus, HANDLERS, Allocate, CreateProduct, MissingSkuException, OutOfStock, out_of_stock_handler
 
 app = Flask(__name__)
 
@@ -83,6 +83,12 @@ def allocate():
         return render_template_string("Próba alokacji zakończona. Sprawdź stan. <a href='/'>Wróć</a>")
 
     return render_template_string(FORM_HTML, title="Wydaj towar")
+
+
+@app.errorhandler(MissingSkuException)
+def missing_sku(e: MissingSkuException):
+    return f"Nie ma takiego SKU: {e.sku}"
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

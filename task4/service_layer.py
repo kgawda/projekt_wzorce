@@ -47,6 +47,15 @@ class CreateProduct(Message):
     qty: int
 
 
+class AppException(Exception):
+    pass
+
+class MissingSkuException(AppException):
+    def __init__(self, msg, sku):
+        super().__init__(msg)
+        self.sku = sku
+
+
 class InMemoryUnitOfWork(AbstractUnitOfWork):
     def __init__(self) -> None:
         self.products = InMemoryRepo()
@@ -88,7 +97,7 @@ def allocate_handler(cmd: Allocate, uow: AbstractUnitOfWork):
     with uow:
         product = uow.products.get(cmd.sku)
         if product is None:
-            ...
+            raise MissingSkuException("No such SKU in database", cmd.sku)
         product.allocate(cmd.amount)
 
 def create_product_handler(cmd: CreateProduct, uow: AbstractUnitOfWork):
@@ -115,7 +124,7 @@ email_config = {
 
 
 HANDLERS = {
-    Allocate: [allocate_handler, lambda event, uow: out_of_stock_email_notifier(event, uow, email_config)],
+    Allocate: [allocate_handler],
     CreateProduct: [create_product_handler],
-    OutOfStock: [out_of_stock_handler],
+    OutOfStock: [out_of_stock_handler, lambda event, uow: out_of_stock_email_notifier(event, uow, email_config)],
 }
